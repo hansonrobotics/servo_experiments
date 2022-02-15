@@ -18,14 +18,11 @@
 # limitations under the License.
 #
 
-from ast import Return
-from dataclasses import dataclass
 import time
 import argparse
 import time
 import scservo_sdk as sdk
 import matplotlib.pyplot as plt
-import numpy as np
 
 # Control table address
 ADDR_SCS_TORQUE_ENABLE     = 40
