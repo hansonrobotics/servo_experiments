@@ -1,6 +1,7 @@
 ## REQUIREMENT
  - Python 3.8
  - Serial port access, for Ubuntu current user needs to be in dialout group
+ - Feetech SCS or STS servos. 
 ## INSTALLATION
 For Ubuntu:
 
