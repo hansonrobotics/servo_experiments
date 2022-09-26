@@ -28,13 +28,16 @@ import scservo_sdk as sdk
 def argument_parser():
     parser = argparse.ArgumentParser(description="Ping all feetech servos", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # By default we search for all CH430 ports with
-    parser.add_argument("--hardware_regex", type=str, default='1A86:7523', help='Serial port filter for detecting multiple boards')
+    parser.add_argument("--hardware_regex", type=str, default='1A86:7523', help='Serial port filter for detecting multiple boards or specify single board')
     parser.add_argument("--baud", type=int, default=1000000, help='Baudrate')
     parser.add_argument("--from_id", type=int, default=0, help='From ID')
     parser.add_argument("--to_id", type=int, default=110, help='To ID')
     parser.add_argument("--json", type=bool, default=False, help="Output as JSON")
+    parser.add_argument("--find_any", type=bool, default=False, help="If True, will print motor ID and return immediatly after found, if none servo found it will fail with exit code 1")
     args = parser.parse_args()
     return vars(args)
+# Global dictionary for args
+args = argument_parser()
 
 def pingservos(port, baud, from_id, to_id):
     port = sdk.PortHandler(port)
@@ -49,22 +52,31 @@ def pingservos(port, baud, from_id, to_id):
             model_number, result, error = handler.ping(port, id)
             if result == sdk.COMM_SUCCESS:
                 servos.append((id, model_number))
+                if args['find_any']:
+                    servo_found(id)
         return servos
     except Exception as e:
         print(e)
         return None
 
-def find_all_servos(args):
+def find_all_servos():
     ports = [p.device for p in grep_serial_ports(args['hardware_regex'])]
     devices = {}
     for p in ports:
         devices[p] = pingservos(p, args['baud'], args['from_id'], args['to_id'])
     return devices
 
+def servo_found(id):
+    # Simple output
+    print(id)
+    exit(0)
 
 def main():
-    args = argument_parser()
-    device_servos = find_all_servos(args)
+    device_servos = find_all_servos()
+    if args['find_any']:
+        print("No servo found")
+        exit(1)
+
     if args['json']:
         print(json.dumps(device_servos, indent=4, sort_keys=True))
     else:
