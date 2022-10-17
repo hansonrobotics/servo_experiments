@@ -1,0 +1,31 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  new-release:
+  
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python # Set Python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      # Install pip and pytest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyserial pyinstaller
+      - name: Build Binaries
+        run: |
+           pyinstaller -F rw.py
+           pyinstaller -F ping.py
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            build/ping
+            build/rw
