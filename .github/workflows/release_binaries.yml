@@ -1,7 +1,9 @@
-name: Python package
+name: Release Binaries
 
-on: [push]
-
+on:
+  push:
+    tags:
+      - "v*"
 jobs:
   new-release:
   
@@ -27,5 +29,5 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
-            build/ping
-            build/rw
+            dist/ping
+            dist/rw
