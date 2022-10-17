@@ -17,12 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import os
+from sys import exit
 import argparse
-import json
 from pprint import pprint as pp
 from serial.tools.list_ports import grep as grep_serial_ports
 import scservo_sdk as sdk
+from scservo_sdk import port_handler
+from time import sleep
+os.environ['COLUMNS'] = "180"
 
 ACTIONS = {
     'reset_neutral':
@@ -35,7 +38,12 @@ ACTIONS = {
         {
             'addr':     5,
             'length':   1,
-        }
+        },
+    'load':{
+        'addr': 60,
+        'length': 2,
+        'negative_bit': 10,
+    },
 }
 
 def argument_parser():
@@ -43,13 +51,17 @@ def argument_parser():
     # By default we search for all CH430 ports with
     parser.add_argument("--hardware_regex", type=str, default='1A86:7523', help='Serial port filter for detecting multiple boards or specify single board')
     parser.add_argument("--baud", type=int, default=1000000, help='Baudrate')
-    parser.add_argument("--protocol", type=int, default=0, help='SCS Protocol')
-    parser.add_argument("--id", type=int, help='Servo ID', required=True)
-    parser.add_argument("--addr", type=int, help='Register')
-    parser.add_argument("--length", type=int, help='Address length in bytes', choices=[1,2])
-    parser.add_argument("--negative_bit", type=int, help='Negative sign  bit for this register')
-    parser.add_argument("--write", type=int, help='Data to write in the decimal format ')
-    parser.add_argument("--action", type=str, help="Defined actions such as set", choices=list(ACTIONS.keys()))
+    parser.add_argument("--protocol", '-p', type=int, default=0, help='SCS Protocol')
+    parser.add_argument("--id", '-i', type=int, help='Servo ID', required=True)
+    parser.add_argument("--addr", '-a',type=int, help='Register')
+    parser.add_argument("--length", '-l',type=int, help='Address length in bytes', choices=[1,2])
+    parser.add_argument("--negative_bit", '-n', type=int, help='Negative sign  bit for this register')
+    parser.add_argument("--write", '-w', type=int, help='Data to write in the decimal format ')
+    parser.add_argument("--action", '-c', type=str, help="Defined actions such as set", choices=list(ACTIONS.keys()))
+    parser.add_argument("--repeat", '-r', nargs='?', const=True, help="Keep reading the register until the CTRL+C pressed")
+    parser.add_argument("--lock", '-x', type=int, nargs='?',const=55, help="Specify Lock register for permanent saves. The Lock will be unlocked for writing if specified")
+
+
     args = parser.parse_args()
     args = vars(args)
     if args.get('action', False):
@@ -100,10 +112,40 @@ def write(port, handler):
         result, error = handler.write2ByteTxRx(port, args['id'], args['addr'], data)
     if not result == sdk.COMM_SUCCESS:
         print("Error wiriting data")
-        exit(1)
+        return False
     else:
         print("Sucessfully written")
-        exit()
+        return True
+
+
+def reading(port, handler):
+    try:
+        while True:
+            read(port,handler)
+            if args.get('repeat') is None:
+                break
+            sleep(0.05)
+    except KeyboardInterrupt:
+        exit(0)
+
+def writing(port, handler):
+    locked = False
+    if args['addr'] < 40:
+        if args.get('lock') is None:
+            print("WARNING: for permanent write you need to specify the lock register with --lock sign")
+        else:
+            # unlock
+            result, error = handler.write1ByteTxRx(port, args['id'], args['lock'], 0)
+            if not result == sdk.COMM_SUCCESS:
+                print("Error unlocking. May try again")
+                exit(1)
+            locked = True
+
+    write(port, handler)
+    # Lock back
+    if locked:
+        result, error = handler.write1ByteTxRx(port, args['id'], args['lock'], 1)
+
 
 def read(port, handler):
     length = args['length']
@@ -124,9 +166,9 @@ def read(port, handler):
 def main():
     port, handler = find_servo()
     if args.get('write') is not None:
-        write(port, handler)
+        writing(port, handler)
     else:
-        read(port, handler)
+        reading(port, handler)
 
 if __name__ == '__main__':
     main()

@@ -50,28 +50,32 @@ Allows to read and write registers to the servo
 ```
 
 ```
-usage: rw.py [-h] [--hardware_regex HARDWARE_REGEX] [--baud BAUD]
-             [--protocol PROTOCOL] --id ID [--addr ADDR] [--length {1,2}]
-             [--negative_bit NEGATIVE_BIT] [--write WRITE]
-             [--action {reset_neutral,id}]
+usage: rw.py [-h] [--hardware_regex HARDWARE_REGEX] [--baud BAUD] [--protocol PROTOCOL] --id ID [--addr ADDR] [--length {1,2}] [--negative_bit NEGATIVE_BIT] [--write WRITE]
+             [--action {reset_neutral,load,id}] [--repeat [REPEAT]] [--lock [LOCK]]
 
 Read Write Feetech registers
 
 optional arguments:
   -h, --help            show this help message and exit
   --hardware_regex HARDWARE_REGEX
-                        Serial port filter for detecting multiple boards or
-                        specify single board (default: 1A86:7523)
+                        Serial port filter for detecting multiple boards or specify single board (default: 1A86:7523)
   --baud BAUD           Baudrate (default: 1000000)
-  --protocol PROTOCOL   SCS Protocol (default: 0)
-  --id ID               Servo ID (default: None)
-  --addr ADDR           Register (default: None)
-  --length {1,2}        Address length in bytes (default: None)
-  --negative_bit NEGATIVE_BIT
+  --protocol PROTOCOL, -p PROTOCOL
+                        SCS Protocol (default: 0)
+  --id ID, -i ID        Servo ID (default: None)
+  --addr ADDR, -a ADDR  Register (default: None)
+  --length {1,2}, -l {1,2}
+                        Address length in bytes (default: None)
+  --negative_bit NEGATIVE_BIT, -n NEGATIVE_BIT
                         Negative sign bit for this register (default: None)
-  --write WRITE         Data to write in the decimal format (default: None)
-  --action {reset_neutral,id}
+  --write WRITE, -w WRITE
+                        Data to write in the decimal format (default: None)
+  --action {reset_neutral,load,id}, -c {reset_neutral,load,id}
                         Defined actions such as set (default: None)
+  --repeat [REPEAT], -r [REPEAT]
+                        Keep reading the register until the CTRL+C pressed (default: None)
+  --lock [LOCK], -x [LOCK]
+                        Specify Lock register for permanent saves. The Lock will be unlocked for writing if specified (default: None). if specified it will try get set 55 addr, however can specify other addres if need (48 for some older servos)
 ```
 Examples:
 Writes goal_position:
